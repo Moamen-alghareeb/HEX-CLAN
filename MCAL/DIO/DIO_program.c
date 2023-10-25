@@ -6,6 +6,7 @@
 #include "DIO_std_types.h"
 #include "BIT_MATH.h"
 
+/*ghareeb*/
 static const Dio_ConfigType *Dio_PortPins = NULL_PTR;
 static u8 Dio_Status = DIO_NOT_INITIALIZED;
 
