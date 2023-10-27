@@ -1,470 +1,1061 @@
-/******************************************************************************/
-/******************************************************************************/
-/********************          Author:  Moamen Alghareeb       ****************/
-/********************          Layer:   MCAL                   ****************/
-/********************          SWC:     TIMER                    ****************/
-/********************          Version: 1.0                    ****************/
-/******************************************************************************/
-/******************************************************************************/
+/***********************************************************************/
+/***********************************************************************/
+/***********************   Moamen Alghareeb & Omar   *******************/
+/***********************   Layer :MCAL  			 *******************/
+/***********************   SWC (DRIVER):TIMER		 *******************/
+/***********************   DATA : 27-10-2023 		 *******************/
+/***********************   VERSION : 2.00   ****************************/
+/***********************************************************************/
+/***********************************************************************/
 
 #include "STD_TYPES.h"
 #include "BIT_MATH.h"
+
 #include "TIMER_register.h"
-#include "TIMER_interface.h"
 #include "TIMER_private.h"
 #include "TIMER_config.h"
+#include "TIMER_interface.h"
 
-/************************************************************************************************************************************************************/
-/*********************************************************			GLOBAL VARIABLES			  ***********************************************************/
-/************************************************************************************************************************************************************/
-void (*TIMER_pvTimer0OVFFunc)(void) = NULL;
-void (*TIMER_pvTimer0CompFunc)(void) = NULL;
+void (*Timer_pvCallBackFunc[8])(void)={NULL};
 
-void (*TIMER_pvTimer1OVFFunc)(void) = NULL;
-void (*TIMER_pvTimer1CompAFunc)(void) = NULL;
-void (*TIMER_pvTimer1CompBFunc)(void) = NULL;
-void (*TIMER_pvIcuFunc)(void) = NULL;
-
-void (*TIMER_pvTimer2OVFFunc)(void) = NULL;
-void (*TIMER_pvTimer2CompFunc)(void) = NULL;
-void (*TIMER_pvTimer2Func)(void) = NULL;
-
-
-/************************************************************************************************************************************************************/
-/*********************************************************			TIMER 0 Functions			  ***********************************************************/
-/************************************************************************************************************************************************************/
-
-void TIMER0_voidInit(void)
+void Timer0_Init (void)
 {
-	/**********************************************************************/
-	/*****************Set Timer0 Waveform Generation MODE******************/
-	/**********************************************************************/
-
-	/***************Normal Overflow Mode************/
-#if TIMER0_WAVE_GENERATION_SENSE == NORMAL
+#if TIMER0_MODE ==  TIMER0_NORMAL
 	CLR_BIT(TCCR0,TCCR0_WGM00);
 	CLR_BIT(TCCR0,TCCR0_WGM01);
-	SET_BIT(TIMSK,TIMSK_TOIE0);
-	/********************************CTC Mode**********************/
-#elif TIMER0_WAVE_GENERATION_SENSE == CTC
+
+	/*clear the output comp value */
+	TCCR0 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR0 |= TIMER0_NORMAL_CTC_OCO ;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER0_PRELOAD_INIT ,TIMER0);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE0 , TIMER0);
+	Timer_u8InterruptState  (DISABLE , OCIE0 , TIMER0);
+
+#elif TIMER0_MODE ==  TIMER0_PWM
+	SET_BIT(TCCR0,TCCR0_WGM00);
+	CLR_BIT(TCCR0,TCCR0_WGM01);
+
+	TCCR0 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR0 |= TIMER0_PWM_OCO;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER0_PRELOAD_INIT ,TIMER0);
+	/*Set the compare value*/
+	Timer_u8SetCompValue (TIMER0_COMPARE_INIT ,TIMER0 ,NO_CHANNEL);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE0 , TIMER0);
+	Timer_u8InterruptState  (DISABLE , OCIE0 , TIMER0);
+
+#elif TIMER0_MODE ==  TIMER0_CTC
 	CLR_BIT(TCCR0,TCCR0_WGM00);
 	SET_BIT(TCCR0,TCCR0_WGM01);
-	SET_BIT(TIMSK,TIMSK_OCIE0);
-	/*****************Set Compare Output MODE******************/
-#if TIMER0_CTC_SENSE == NO_OPERATION
-	CLR_BIT(TCCR0,TCCR0_COM01);
-	CLR_BIT(TCCR0,TCCR0_COM00);
-#elif TIMER0_CTC_SENSE == TOGGLE
-	CLR_BIT(TCCR0,TCCR0_COM01);
-	SET_BIT(TCCR0,TCCR0_COM00);
-#elif TIMER0_CTC_SENSE == CLR
-	SET_BIT(TCCR0,TCCR0_COM01);
-	CLR_BIT(TCCR0,TCCR0_COM00);
-#elif TIMER0_CTC_SENSE == SET
-	SET_BIT(TCCR0,TCCR0_COM00);
-	SET_BIT(TCCR0,TCCR0_COM01);
-#else
-#error "Wrong TIMER0_CTC_SENSE configuration option"
-#endif
+
+	TCCR0 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR0 |= TIMER0_NORMAL_CTC_OCO ;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER0_PRELOAD_INIT ,TIMER0);
+	/*Set the compare value*/
+	Timer_u8SetCompValue (TIMER0_COMPARE_INIT ,TIMER0 ,NO_CHANNEL);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE0 , TIMER0);
+	Timer_u8InterruptState  (ENABLE , OCIE0 , TIMER0);
+
+#elif TIMER0_MODE ==  TIMER0_FAST_PWM
+	SET_BIT(TCCR0,TCCR0_WGM00);
+	SET_BIT(TCCR0,TCCR0_WGM01);
+
+	TCCR0 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR0 |= TIMER0_FAST_PWM_OCO ;
+
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER0_PRELOAD_INIT ,TIMER0);
+	/*Set the compare value*/
+	Timer_u8SetCompValue (TIMER0_COMPARE_INIT ,TIMER0 ,NO_CHANNEL);
+
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE0 , TIMER0);
+	Timer_u8InterruptState  (DISABLE , OCIE0 , TIMER0);
 
 #else
-#error "Wrong WAVE_GENERATION_SENSE configuration option"
-#endif
-	/*****************Set Timer0 PWM output  MODE******************/
-#if ( (TIMER0_WAVE_GENERATION_SENSE == PWM_PHASE_CORRECT) || (TIMER0_WAVE_GENERATION_SENSE == FAST_PWM) )
-#if TIMER0_PWM_SENSE == NO_OPERATION
-	CLR_BIT(TCCR0,TCCR0_COM01);
-	CLR_BIT(TCCR0,TCCR0_COM00);
-#elif TIMER0_PWM_SENSE == NON_INVERTED
-	SET_BIT(TCCR0,TCCR0_COM01);
-	CLR_BIT(TCCR0,TCCR0_COM00);
-#elif TIMER0_PWM_SENSE == INVERTED
-	SET_BIT(TCCR0,TCCR0_COM00);
-	SET_BIT(TCCR0,TCCR0_COM01);
-#else
-#error "Wrong TIMER0_PWM_SENSE configuration option"
-#endif
-#else
+#error "WRONG IN TIMER0_MODE"
 #endif
 
-	/**********************************************************************/
-	/************************Set Timer0 Clock Select***********************/
-	/**********************************************************************/
-	TCCR0 = (CLK_MASK0) | (TIMER0_CLOCK_SELECT_SENSE);
 
 }
 
-/**********************************************************************/
-/***********************POST BUILD CONFIGURATION***********************/
-/**********************************************************************/
-void TIMER0_voidSetCompMatchValue(u8 Copy_u8Value)
+
+void Timer1_Init (void)
 {
-	OCR0 = Copy_u8Value;
-}
+#if   TIMER1_MODE ==  TIMER1_NORMAL
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
 
-void TIMER0_voidSetTimerValue(u8 Copy_u8Value)
-{
-	TCNT0 = Copy_u8Value;
-}
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |=TIMER1_NORMAL_CTC_MODE_CHANNELA ;
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_NORMAL_CTC_MODE_CHANNELB ;
 
-/**********************************************************************/
-/*****************Timer0 OverFlow interrupt Handling*******************/
-/**********************************************************************/
 
-u8 TIMER0_u8OVFSetCallBack(void (*Copy_pvTimer0OVFFunc)(void))
-{
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimer0OVFFunc != NULL)
-	{
-		TIMER_pvTimer0OVFFunc = Copy_pvTimer0OVFFunc;
-	}
-	else
-	{
-		Local_u8ErrorState = NULL_POINTER;
-	}
-	return Local_u8ErrorState;
-}
+	/*enter the preload value*/
+	Timer_u8PreLoad (TIMER1_PRELOAD_INIT , TIMER1);
 
-void __vector_11(void) __attribute__((signal));
-
-void __vector_11(void)
-{
-	if(TIMER_pvTimer0OVFFunc != NULL)
-	{
-		TIMER_pvTimer0OVFFunc();
-	}
-	else
-	{
-		/*Do Nothing*/
-	}
-}
-
-/**********************************************************************/
-/*****************Timer0 OverFlow interrupt Handling*******************/
-/**********************************************************************/
-
-u8 TIMER0_u8CompSetCallBack(void (*Copy_pvTimer0CompFunc)(void))
-{
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimer0CompFunc != NULL)
-	{
-		TIMER_pvTimer0CompFunc = Copy_pvTimer0CompFunc;
-	}
-	else
-	{
-		Local_u8ErrorState = NULL_POINTER;
-	}
-	return Local_u8ErrorState;
-}
-
-void __vector_10(void) __attribute__((signal));
-
-void __vector_10(void)
-{
-	if(TIMER_pvTimer0CompFunc != NULL)
-	{
-		TIMER_pvTimer0CompFunc();
-	}
-	else
-	{
-		/*Do Nothing*/
-	}
-}
-
-/************************************************************************************************************************************************************/
-/*********************************************************			TIMER 1 Functions			  ***********************************************************/
-/************************************************************************************************************************************************************/
-
-void TIMER1_voidInit(void)
-{
-	/****************************************  Wave Generation Modes selection  ************************************/
-
-	/****************************************************************************************************/
-	/****************************************  Normal Overflow Mode  ************************************/
-	/****************************************************************************************************/
-#if	TIMER1_WAVE_GENERATION_SENSE == NORMAL
-	CLR_BIT(TCCR1A,WGM10);
-	CLR_BIT(TCCR1A,WGM11);
-	CLR_BIT(TCCR1B,WGM12);
-	CLR_BIT(TCCR1B,WGM13);
+	/*Enable the Ovf */
 	SET_BIT(TIMSK,TIMSK_TOIE1);
 
-	/****************************************************************************************************/
-	/******************************************  CTC Mode  **********************************************/
-	/****************************************************************************************************/
 
-#elif TIMER1_WAVE_GENERATION_SENSE == CTC
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
 
-	/**************CTC TOP Mode************/
 
-#if TIMER1_TOP_SENSE == OCR
-	CLR_BIT(TCCR1A,WGM10);
-	CLR_BIT(TCCR1A,WGM11);
-	SET_BIT(TCCR1B,WGM12);
-	CLR_BIT(TCCR1B,WGM13);
-#elif TIMER1_TOP_SENSE == ICR
-	CLR_BIT(TCCR1A,WGM10);
-	CLR_BIT(TCCR1A,WGM11);
-	SET_BIT(TCCR1B,WGM12);
-	SET_BIT(TCCR1B,WGM13);
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PWM_8BIT
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |=TIMER1_PWM_MODE_CHANNELA ;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PWM_9BIT
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PWM_10BIT
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_PWM_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_CTC0
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_NORMAL_CTC_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_NORMAL_CTC_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_FAST_PWM_8BIT
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_FAST_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_FAST_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_FAST_PWM_9BIT
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_FAST_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_FAST_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_FAST_PWM_10BIT
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	CLR_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_FAST_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_FAST_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PHASE_FREQ_CORRECT0
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PHASE_FREQ_CORRECT1
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |=TIMER1_PWM_MODE_CHANNELA ;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_PWM_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PWM0
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_PWM_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_PWM1
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	CLR_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELA;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |= TIMER1_PWM_MODE_CHANNELB;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_CTC1
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	CLR_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |= TIMER1_NORMAL_CTC_MODE_CHANNELA ;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_NORMAL_CTC_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_FAST_PWM0
+	CLR_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |=TIMER1_FAST_PWM_MODE_CHANNELA ;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_FAST_PWM_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+#elif TIMER1_MODE ==  TIMER1_FAST_PWM1
+	SET_BIT(TCCR1A,TCCR1A_WGM10);
+	SET_BIT(TCCR1A,TCCR1A_WGM11);
+	SET_BIT(TCCR1B,TCCR1B_WGM12);
+	SET_BIT(TCCR1B,TCCR1B_WGM13);
+
+	/*CLear the output compare mode*/
+	/*Select the output compare mode */
+	TCCR1A &= TIMER1_CLEAR_CHANNELA ;
+	TCCR1A |=TIMER1_FAST_PWM_MODE_CHANNELA ;
+
+	TCCR1A &= TIMER1_CLEAR_CHANNELB ;
+	TCCR1A |=TIMER1_FAST_PWM_MODE_CHANNELB ;
+
+	/*Enter the type of trigger in input capture mode */
+	Timer1_u8SetTrigger (RISING) ;
+	/*enter the preload value*/
+	Timer_u8PreLoad (0 , TIMER1);
+	/*enter the comp mode value of channel a and b */
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELA);
+	Timer_u8SetCompValue ( 0 , TIMER1 , CHANNELB);
+
+
+
+
+
+
+
 #else
-#error "Wrong TIMER1_TOP_SENSE configuration option"
-#endif
-	SET_BIT(TIMSK,TIMSK_OCIE1A);
-	SET_BIT(TIMSK,TIMSK_OCIE1B);
-
-#else
-#error "Wrong TIMER1_WAVE_GENERATION_SENSE configuration option"
+#error "WRONG IN TIMER1_MODE"
 #endif
 
-
-	/**********************************************************************/
-	/************************Set Timer1 Clock Select***********************/
-	/**********************************************************************/
-
-	TCCR1B = (CLK_MASK1)|(TIMER1_CLOCK_SELECT_SENSE);
 }
 
-
-/*Set Timer Value Function*/
-void TIMER1_voidSetTimerValue(u16 Copy_u16Value)
+void  Timer2_Init (void)
 {
-	TCNT1 = Copy_u16Value;
-}
-/*Get Timer Value Function*/
-u16  TIMER1_voidGetTimerValue(void)
-{
-	return TCNT1;
-}
-/*Set Comp1A Match Value Function*/
-void TIMER1_voidSetCompMatchAValue(u8 Copy_u8Value)
-{
-	OCR1A = Copy_u8Value;
-}
-/*Set Comp1B Match Value Function*/
-void TIMER1_voidSetCompMatchBValue(u8 Copy_u8Value)
-{
-	OCR1B = Copy_u8Value;
-}
-/*Set Top Value Function*/
-void TIMER1_voidSetCompMatchTopValue(u8 Copy_u8Value)
-{
-	ICR1 = Copy_u8Value;
-}
+#if   TIMER2_MODE == TIMER2_NORMAL
 
-/**********************************************************************/
-/*****************Timer1 OverFlow interrupt Handling*******************/
-/**********************************************************************/
-
-u8 TIMER1_u8OVFSetCallBack(void (*Copy_pvTimerOVFFunc)(void))
-{
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimerOVFFunc != NULL)
-	{
-		TIMER_pvTimer1OVFFunc = Copy_pvTimerOVFFunc;
-	}
-	else
-	{
-		Local_u8ErrorState = NULL_POINTER;
-	}
-	return Local_u8ErrorState;
-}
-
-void __vector_9(void) __attribute__((signal));
-
-void __vector_9(void)
-{
-	if(TIMER_pvTimer1OVFFunc != NULL)
-	{
-		TIMER_pvTimer1OVFFunc();
-	}
-	else
-	{
-		/*Do Nothing*/
-	}
-}
-
-/**********************************************************************/
-/**************Timer1 Comp & Match A interrupt Handling****************/
-/**********************************************************************/
-
-u8 TIMER1_u8CompASetCallBack(void (*Copy_pvTimerCompFunc)(void))
-{
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimerCompFunc != NULL)
-	{
-		TIMER_pvTimer1CompAFunc = Copy_pvTimerCompFunc;
-	}
-	else
-	{
-		Local_u8ErrorState = NULL_POINTER;
-	}
-	return Local_u8ErrorState;
-}
-
-void __vector_7(void) __attribute__((signal));
-
-void __vector_7(void)
-{
-	if(TIMER_pvTimer1CompAFunc != NULL)
-	{
-		TIMER_pvTimer1CompAFunc();
-	}
-	else
-	{
-		/*Do Nothing*/
-	}
-}
-/**********************************************************************/
-/***************Timer1 Comp&Mtach B interrupt Handling*****************/
-/**********************************************************************/
-
-u8 TIMER1_u8CompBSetCallBack(void (*Copy_pvTimerCompFunc)(void))
-{
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimerCompFunc != NULL)
-	{
-		TIMER_pvTimer1CompBFunc = Copy_pvTimerCompFunc;
-	}
-	else
-	{
-		Local_u8ErrorState = NULL_POINTER;
-	}
-	return Local_u8ErrorState;
-}
-
-void __vector_8(void) __attribute__((signal));
-
-void __vector_8(void)
-{
-	if(TIMER_pvTimer1CompBFunc != NULL)
-	{
-		TIMER_pvTimer1CompBFunc();
-	}
-	else
-	{
-		/*Do Nothing*/
-	}
-}
-
-/************************************************************************************************************************************************************/
-/*********************************************************			TIMER 2 Functions			  ***********************************************************/
-/************************************************************************************************************************************************************/
-
-void TIMER2_init(void)
-{
-	/**********************************************************************/
-	/*****************Set Timer2 Waveform Generation MODE******************/
-	/**********************************************************************/
-
-	/***************Normal Overflow Mode************/
-#if TIMER2_WAVE_GENERATION_SENSE == NORMAL
 	CLR_BIT(TCCR2,TCCR2_WGM20);
 	CLR_BIT(TCCR2,TCCR2_WGM21);
-	SET_BIT(TIMSK,TIMSK_TOIE2);
-	/******************CTC Mode*********************/
-#elif TIMER2_WAVE_GENERATION_SENSE == CTC
+
+	/*clear the output comp value */
+	TCCR2 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR2 |= TIMER2_NORMAL_CTC_OC2 ;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER2_PRELOAD_INIT ,TIMER2);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE2 , TIMER2);
+	Timer_u8InterruptState  (DISABLE , OCIE2 , TIMER2);
+
+
+#elif TIMER2_MODE == TIMER2_PWM
+	SET_BIT(TCCR2,TCCR2_WGM20);
+	CLR_BIT(TCCR2,TCCR2_WGM21);
+
+	TCCR2 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR2 |= TIMER2_PWM_OC2;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER2_PRELOAD_INIT ,TIMER0);
+	/*Set the compare value*/
+	Timer_u8SetCompValue (TIMER2_COMPARE_INIT ,TIMER2 ,NO_CHANNEL);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE2 , TIMER2);
+	Timer_u8InterruptState  (DISABLE , OCIE2 , TIMER2);
+
+#elif TIMER2_MODE == TIMER2_CTC
+
 	CLR_BIT(TCCR2,TCCR2_WGM20);
 	SET_BIT(TCCR2,TCCR2_WGM21);
-	SET_BIT(TIMSK,TIMSK_OCIE2);
-	/*****************Set CTC Output  MODE******************/
-#if TIMER2_CTC_SENSE == NO_OPERATION
-	CLR_BIT(TCCR2,TCCR2_COM21);
-	CLR_BIT(TCCR2,TCCR2_COM20);
-#elif TIMER2_CTC_SENSE == CLR
-	SET_BIT(TCCR2,TCCR2_COM21);
-	CLR_BIT(TCCR2,TCCR2_COM20);
-#elif TIMER2_CTC_SENSE == SET
-	SET_BIT(TCCR2,TCCR2_COM20);
-	SET_BIT(TCCR2,TCCR2_COM21);
-#else
-#error "Wrong TIMER2_CTC_SENSE configuration option"
-#endif
+
+	TCCR2 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR2 |= TIMER2_NORMAL_CTC_OC2 ;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER2_PRELOAD_INIT ,TIMER2);
+	/*Set the compare value*/
+	Timer_u8SetCompValue (TIMER2_COMPARE_INIT ,TIMER2,NO_CHANNEL);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE2 , TIMER2);
+	Timer_u8InterruptState  (DISABLE , OCIE2 , TIMER2);
+
+#elif TIMER2_MODE == TIMER2_FAST_PWM
+	SET_BIT(TCCR2,TCCR2_WGM20);
+	SET_BIT(TCCR2,TCCR2_WGM21);
+
+	TCCR0 &= Timer02_CLEAR_OC0_OC2 ;
+	/*Set the output comp value */
+	TCCR0 |= TIMER2_FAST_PWM_OC2 ;
+
+	/*Set the PreLoad Value*/
+	Timer_u8PreLoad (TIMER2_PRELOAD_INIT ,TIMER2);
+	/*Set the compare value*/
+	Timer_u8SetCompValue (TIMER2_COMPARE_INIT ,TIMER2 ,NO_CHANNEL);
+
+	/*Set the interrupt state*/
+	Timer_u8InterruptState  (DISABLE , TOIE2 , TIMER2);
+	Timer_u8InterruptState  (DISABLE , OCIE2 , TIMER2);
 
 #else
-#error "Wrong WAVE_GENERATION_SENSE configuration option"
+#error "WRONG IN Timer2_mode"
 #endif
-	/**********************************************************************/
-	/************************Set Timer2 Clock Select***********************/
-	/**********************************************************************/
-	TCCR2 = (CLK_MASK2) | TIMER2_CLOCK_SELECT_SENSE;
+
 }
 
-/**********************************************************************/
-/***********************POST BUILD CONFIGURATION***********************/
-/**********************************************************************/
-void TIMER2_voidSetCompMatchValue(u8 Copy_u8Value)
+u8 Timer_u8PreLoad (u16 Copy_u8Value , u8 Copy_u8TypeTimer)
 {
-	OCR2 = Copy_u8Value;
-}
-
-void TIMER2_voidSetTimerValue(u8 Copy_u8Value)
-{
-	TCNT2 = Copy_u8Value;
-}
-/**********************************************************************/
-/*****************Timer2 OverFlow interrupt Handling*******************/
-/**********************************************************************/
-u8 TIMER2_u8OVFSetCallBack(void (*Copy_pvTimer2OVFFunc)(void))
-{
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimer2OVFFunc != NULL)
+	u8 Local_u8ErrorState =OK ;
+	switch (Copy_u8TypeTimer)
 	{
-		TIMER_pvTimer2OVFFunc = Copy_pvTimer2OVFFunc;
-		return Local_u8ErrorState;
+	case TIMER0 :TCNT0= Copy_u8Value; break;
+	case TIMER1 :TCNT1= Copy_u8Value; break;
+	case TIMER2 :TCNT2 =Copy_u8Value; break ;
+	default : Local_u8ErrorState =NOK ;
+	}
+	return Local_u8ErrorState ;
+}
+
+u8 Timer_u8SetCompValue ( u16 Copy_u8Value , u8 Copy_u8TypeTimer , u8 Copy_u8Channel)
+{
+	u8 Local_u8ErrorState =OK ;
+	switch (Copy_u8TypeTimer)
+	{
+	case TIMER0 :OCR0= Copy_u8Value; break;
+	case TIMER1 :
+		switch (Copy_u8Channel)
+		{
+		case CHANNELA :
+			OCR1A =Copy_u8Value ; break ;
+		case CHANNELB :
+			OCR1B = Copy_u8Value; break;
+		default :Local_u8ErrorState =NOK ; break;
+		}
+		break ;
+		case TIMER2 :OCR2 =Copy_u8Value; break ;
+		default : Local_u8ErrorState =NOK ; break;
+	}
+	return Local_u8ErrorState ;
+
+}
+
+u8 Timer_u8InterruptState  (u8 Copy_InterruptState , u8 Copy_InterruptPin , u8 Copy_u8TypeTimer)
+{
+	u8 Local_u8ErrorState =OK ;
+
+	if (Copy_u8TypeTimer == TIMER0 )
+	{
+		if (Copy_InterruptPin  == OCIE0 )
+		{
+          if (Copy_InterruptState == ENABLE)
+          {
+          	 SET_BIT(TIMSK,TIMSK_OCIE0);
+          }
+          else if (Copy_InterruptState == DISABLE)
+          {
+          	  CLR_BIT(TIMSK,TIMSK_OCIE0);
+          }
+			else
+		  {
+				Local_u8ErrorState =NOK;
+          }
+		}
+		else if (Copy_InterruptPin  == TOIE0)
+		{
+          if (Copy_InterruptState == ENABLE)
+          {
+          	   SET_BIT(TIMSK,TIMSK_TOIE0);
+          }
+          else if (Copy_InterruptState == DISABLE)
+          {
+          	   CLR_BIT(TIMSK,TIMSK_TOIE0);
+          }
+          else
+          {
+          	Local_u8ErrorState =NOK;
+          }
+		}
+		else
+		{
+			Local_u8ErrorState =NOK ;
+		}
+	}
+	else if (Copy_u8TypeTimer  == TIMER1)
+	{
+		if (Copy_InterruptPin == TICIE)
+		{
+
+			if (Copy_InterruptState == ENABLE)
+			{
+                SET_BIT(TIMSK,TIMSK_TICIE);
+			}
+			else if (Copy_InterruptState == DISABLE)
+			{
+                 CLR_BIT(TIMSK,TIMSK_TICIE);
+			}
+			else
+			{
+				Local_u8ErrorState =NOK;
+			}
+
+		}
+		else if (Copy_InterruptPin == OCIE1A)
+		{
+
+
+			if (Copy_InterruptState == ENABLE)
+			{
+               SET_BIT(TIMSK,TIMSK_OCIE1A);
+			}
+			else if (Copy_InterruptState == DISABLE)
+			{
+                CLR_BIT(TIMSK,TIMSK_OCIE1A);
+			}
+			else
+			{
+				Local_u8ErrorState =NOK;
+			}
+
+
+
+
+		}
+		else if (Copy_InterruptPin == OCIE1B)
+		{
+
+			if (Copy_InterruptState == ENABLE)
+			{
+                SET_BIT(TIMSK,TIMSK_OCIE1B);
+			}
+			else if (Copy_InterruptState == DISABLE)
+			{
+               CLR_BIT(TIMSK,TIMSK_OCIE1B);
+			}
+			else
+			{
+				Local_u8ErrorState =NOK;
+			}
+
+
+
+
+		}
+		else if (Copy_InterruptPin == TOIE1)
+		{
+
+
+			 if (Copy_InterruptState == ENABLE)
+			 {
+                 SET_BIT(TIMSK,TIMSK_TOIE1);
+			 }
+			 else if (Copy_InterruptState == DISABLE)
+			 {
+                 SET_BIT(TIMSK,TIMSK_TOIE1);
+			 }
+			 else
+			 {
+			 	Local_u8ErrorState =NOK;
+			 }
+
+		}
+		else
+		{
+			Local_u8ErrorState =NOK ;
+		}
+
+
+	}
+	else if (Copy_u8TypeTimer == TIMER2 )
+	{
+		if (Copy_InterruptPin == OCIE2)
+		{
+			if (Copy_InterruptState == ENABLE)
+			{
+               SET_BIT(TIMSK,TIMSK_OCIE2);
+			}
+			else if (Copy_InterruptState == DISABLE)
+			{
+               CLR_BIT(TIMSK,TIMSK_OCIE2);
+			}
+			else
+			{
+				Local_u8ErrorState =NOK;
+			}
+
+		}
+		else if (Copy_InterruptPin == TOIE2)
+		{
+
+			if (Copy_InterruptState == ENABLE)
+			{
+                 SET_BIT(TIMSK,TIMSK_TOIE2 );
+			}
+			else if (Copy_InterruptState == DISABLE)
+			{
+                CLR_BIT(TIMSK,TIMSK_TOIE2 );
+			}
+			else
+			{
+				Local_u8ErrorState =NOK;
+			}
+
+
+
+		}
+		else
+		{
+			Local_u8ErrorState =NOK ;
+		}
 	}
 	else
 	{
-		return Local_u8ErrorState = NULL_POINTER;
+		Local_u8ErrorState =NOK;
 	}
+
+	return Local_u8ErrorState ;
 }
 
-void __vector_5(void) __attribute__((signal));
+u8 Timer1_u8SetTrigger (u8 Copy_u8TypeTrigger)
+{
+	u8 Local_u8ErrorState =OK;
 
+	switch (Copy_u8TypeTrigger)
+	{
+	case RISING :SET_BIT(TCCR1B,TCCR1B_ICES1);break;
+	case FALLING :CLR_BIT(TCCR1B,TCCR1B_ICES1); break;
+	default : Local_u8ErrorState =NOK; break;
+	}
+
+	return Local_u8ErrorState;
+
+}
+
+u16 Timer1_u16ReadValue (void)
+{
+	return TCNT1 ;
+}
+u16 Timer1_u16IcuReadValue (void)
+{
+	return ICR1 ;
+}
+u8 Timer0_u8ReadValue (void)
+{
+	return TCNT0 ;
+}
+u8 Timer2_ReadValue (void)
+{
+	return TCNT2;
+}
+
+
+void ICU_Gen_Init (void)
+{
+	/*Set the Trigger */
+	Timer1_u8SetTrigger(RISING);
+
+	/*Set the the interrupt*/
+	SET_BIT(TIMSK,TIMSK_TICIE);
+
+}
+
+u8 Timer_u8CallBackFunc (void (*Copy_pvNotification)(void), u8 Copy_u8NumberInterrupt)
+{
+	u8 Local_u8ErrorState =OK ;
+
+	if (Copy_pvNotification != NULL)
+	{
+		Timer_pvCallBackFunc[Copy_u8NumberInterrupt] = Copy_pvNotification ;
+	}
+	else
+	{
+		Local_u8ErrorState =NOK ;
+	}
+
+
+	return Local_u8ErrorState ;
+}
+
+void WDT_voidEnable (void)
+{
+	SET_BIT(WDTCR,WDTCR_WDE);
+}
+void WDT_voidDissable (void)
+{
+	WDTCR = (1<<WDTCR_WDE)|(1<<WDTCR_WDTOE);
+
+	WDTCR =0 ;
+
+}
+u8 WDT_u8Sleep (u8 Copy_u8SleepTime)
+{
+	u8 Local_u8ErrorState =OK;
+	if (Copy_u8SleepTime <8)
+	{
+		WDTCR &=0b11111000 ;
+		WDTCR |=Copy_u8SleepTime ;
+
+	}
+	else
+	{
+		Local_u8ErrorState =NOK ;
+	}
+	return Local_u8ErrorState ;
+}
+void Clear (void)
+{
+	while (TCNT0 !=255)
+	{
+
+	}
+	TCNT0 =0 ;
+}
+
+void Timer1_SetOnTop (u16 Copy_u16TopValue)
+{
+	ICR1 = Copy_u16TopValue ;
+}
+u8 Timer_Enable (u8 Copy_u8TypeTimer)
+{
+	u8 Local_u8ErrorState = OK;
+	if (Copy_u8TypeTimer == TIMER0)
+	{
+		/*Clear the prescaler */
+		TCCR0 &= TIMER_CLEAR_PRE ;
+		/*Set the Prescaler*/
+		TCCR0 |= TIMER0_PRE ;
+	}
+	else if (Copy_u8TypeTimer == TIMER1)
+	{
+		/*clear and set Prescaler*/
+		TCCR1B &= TIMER_CLEAR_PRE ;
+		TCCR1B |= TIMER1_PRE ;
+
+	}
+	else if (Copy_u8TypeTimer == TIMER2)
+	{
+
+		/*Clear the prescaler */
+		TCCR2 &= TIMER_CLEAR_PRE ;
+		/*Set the Prescaler*/
+		TCCR2 |= TIMER2_PRE ;
+
+	}
+	else
+	{
+		Local_u8ErrorState = NOK;
+	}
+	return Local_u8ErrorState ;
+
+}
+
+void __vector_4 (void)   		__attribute__((signal)); /*timer2 comp match value event */
+void __vector_4 (void)
+{
+	if (Timer_pvCallBackFunc[OCIE2] != NULL)
+	{
+		Timer_pvCallBackFunc[OCIE2]();
+	}
+	else
+	{
+		/*nothing*/
+	}
+}
+void __vector_5(void)   		__attribute__((signal)); /*timer2 ovf value event*/
 void __vector_5(void)
 {
-	if(TIMER_pvTimer2OVFFunc != NULL)
+	if (Timer_pvCallBackFunc[TOIE2] != NULL)
 	{
-		TIMER_pvTimer2OVFFunc();
+		Timer_pvCallBackFunc[TOIE2]();
 	}
 	else
 	{
-		/*Do Nothing*/
+		/*nothing*/
 	}
 }
-
-/**********************************************************************/
-/**************Timer2 Compare&Match interrupt Handling*****************/
-/**********************************************************************/
-
-
-u8 TIMER2_u8CompSetCallBack(void (*Copy_pvTimer2CompFunc)(void))
+void __vector_6 (void)   		__attribute__((signal)); /*timer1 Capture */
+void __vector_6 (void)
 {
-	u8 Local_u8ErrorState = OK;
-	if(Copy_pvTimer2CompFunc != NULL)
+	if (Timer_pvCallBackFunc[TICIE] != NULL)
 	{
-		TIMER_pvTimer2CompFunc = Copy_pvTimer2CompFunc;
+		Timer_pvCallBackFunc[TICIE]();
 	}
 	else
 	{
-		Local_u8ErrorState = NULL_POINTER;
+		/*nothing*/
 	}
-	return Local_u8ErrorState;
 }
-
-void __vector_4(void) __attribute__((signal));
-
-void __vector_4(void)
+void __vector_7 (void)   		__attribute__((signal)); /*timer1 compA*/
+void __vector_7 (void)
 {
-	if(TIMER_pvTimer2CompFunc != NULL)
+	if (Timer_pvCallBackFunc[OCIE1A] != NULL)
 	{
-		TIMER_pvTimer2CompFunc();
+		Timer_pvCallBackFunc[OCIE1A]();
 	}
 	else
 	{
-		/*Do Nothing*/
+		/*nothing*/
 	}
 }
-
+void __vector_8 (void)   		__attribute__((signal)); /*timer1 compB*/
+void __vector_8 (void)
+{
+	if (Timer_pvCallBackFunc[OCIE1B] != NULL)
+	{
+		Timer_pvCallBackFunc[OCIE1B]();
+	}
+	else
+	{
+		/*nothing*/
+	}
+}
+void __vector_9 (void)   		__attribute__((signal)); /*timer 1 ovf */
+void __vector_9 (void)
+{
+	if (Timer_pvCallBackFunc[TOIE1] != NULL)
+	{
+		Timer_pvCallBackFunc[TOIE1]();
+	}
+	else
+	{
+		/*nothing*/
+	}
+}
+void __vector_10 (void)   		__attribute__((signal)); /*timer0 comp */
+void __vector_10 (void)
+{
+	if (Timer_pvCallBackFunc[OCIE0] != NULL)
+	{
+		Timer_pvCallBackFunc[OCIE0]();
+	}
+	else
+	{
+		/*nothing*/
+	}
+}
+void __vector_11 (void)   		__attribute__((signal)); /*timer 0 ovf */
+void __vector_11 (void)
+{
+	if (Timer_pvCallBackFunc[TOIE0] != NULL)
+	{
+		Timer_pvCallBackFunc[TOIE0]();
+	}
+	else
+	{
+		/*nothing*/
+	}
+}
 
 
