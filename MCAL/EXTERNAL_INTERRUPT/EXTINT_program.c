@@ -98,7 +98,7 @@ void MCAL_EXTINT_voidDisable(u8 Copy_u8ExtIntNum)
 	}
 }
 
-void MCAL_EXTINT_voidSetCallBack(void(*Copy_pfun)(void),u8 Copy_u8ExtIntIndex)
+void	(void(*Copy_pfun)(void),u8 Copy_u8ExtIntIndex)
 {
 	EXTINT_ApfuncEXTINT[Copy_u8ExtIntIndex] = Copy_pfun;
 }
