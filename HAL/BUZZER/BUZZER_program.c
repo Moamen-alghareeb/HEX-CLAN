@@ -5,25 +5,87 @@
 #include "BUZZER_private.h"
 
 
-u8 HAL_BUZZER_u8_Init (u8 Copy_u8Port , u8 Copy_u8Pin){
-	u8 Local_u8ErrorState = NOK;
-	Local_u8ErrorState = MCAL_DIO_u8_SetPinDirection(Copy_u8Port ,Copy_u8Pin , PIN_OUTPUT);
-	return Local_u8ErrorState;
+Buzzer_Invalid_Initialization HAL_BUZZER_u8_Init (Dio_ConfigPin Pin_Config){
+	//Initialize the Error state = NOK (1)
+	u8 Local_u8_ErrorStatus = NOK;
+	// check For Initialization of Port
+	if(Pin_Config.Port_Id <= PORTD_ID){
+		// Check for initialization of Pin
+		if(Pin_Config.Pin_Id <= PIN7){
+			//Set Pin Direction & return its error state
+			Local_u8_ErrorStatus = MCAL_DIO_u8_SetPinDirection(Pin_Config);
+		}
+		else{
+			//DO Nothing
+		}
+	}
+	else{
+			//DO Nothing
+	}
+	//return Error state of function
+	return Local_u8_ErrorStatus;
 }
 
-u8 HAL_BUZZER_u8_BuzzerOn (u8 Copy_u8Port , u8 Copy_u8Pin){
-	u8 Local_u8ErrorState = NOK;
-	Local_u8ErrorState = MCAL_DIO_u8_SetPinValue(Copy_u8Port ,Copy_u8Pin , PIN_HIGH);
-	return Local_u8ErrorState;
-}
-u8 HAL_BUZZER_u8_BuzzerOff (u8 Copy_u8Port , u8 Copy_u8Pin){
-	u8 Local_u8ErrorState = NOK;
-	Local_u8ErrorState = MCAL_DIO_u8_SetPinValue(Copy_u8Port ,Copy_u8Pin , PIN_LOW);
-	return Local_u8ErrorState;
-}
-u8 HAL_Buzzer_u8_BuzzerToggle (u8 Copy_u8Port , u8 Copy_u8Pin){
+Buzzer_Invalid_Initialization HAL_BUZZER_u8_BuzzerOn (Dio_ConfigPin Pin_Config){
+	//Initialize the Error state = NOK (1)
+	u8 Local_u8_ErrorStatus = NOK;
+	// check For Initialization of Port
+	if(Pin_Config.Port_Id <= PORTD_ID){
+		// Check for initialization of Pin
+		if(Pin_Config.Pin_Id <= PIN7){
+			//Set Pin Value & return its error state
+			Local_u8_ErrorStatus = MCAL_DIO_u8_SetPinValue(Pin_Config);
+		}
+		else{
+			//DO Nothing
+		}
+	}
+	else{
+			//DO Nothing
+	}
+	//return Error state of function
+	return Local_u8_ErrorStatus;
 
-	u8 Local_u8ErrorState = NOK;
-	Local_u8ErrorState = MCAL_DIO_u8_TogglePinValue(Copy_u8Port ,Copy_u8Pin);
-	return Local_u8ErrorState;
+}
+
+Buzzer_Invalid_Initialization HAL_BUZZER_u8_BuzzerOff (Dio_ConfigPin Pin_Config){
+	//Initialize the Error state = NOK (1)
+	u8 Local_u8_ErrorStatus = NOK;
+	// check For Initialization of Port
+	if(Pin_Config.Port_Id <= PORTD_ID){
+		// Check for initialization of Pin
+		if(Pin_Config.Pin_Id <= PIN7){
+			//Set Pin Value & return its error state
+			Local_u8_ErrorStatus = MCAL_DIO_u8_SetPinValue(Pin_Config);
+		}
+		else{
+			//DO Nothing
+		}
+	}
+	else{
+			//DO Nothing
+	}
+	//return Error state of function
+	return Local_u8_ErrorStatus;
+}
+
+Buzzer_Invalid_Initialization HAL_BUZZER_u8_BuzzerToggle (Dio_ConfigPin Pin_Config){
+	//Initialize the Error state = NOK (1)
+	u8 Local_u8_ErrorStatus = NOK;
+	// check For Initialization of Port
+	if(Pin_Config.Port_Id <= PORTD_ID){
+		// Check for initialization of Pin
+		if(Pin_Config.Pin_Id <= PIN7){
+			//toggle Pin Value & return its error state
+			Local_u8_ErrorStatus = MCAL_DIO_u8_TogglePinValue(Pin_Config);
+		}
+		else{
+			//DO Nothing
+		}
+	}
+	else{
+			//DO Nothing
+	}
+	//return Error state of function
+	return Local_u8_ErrorStatus;
 }
