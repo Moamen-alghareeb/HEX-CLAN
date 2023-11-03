@@ -2,31 +2,16 @@
 /******************************************************************************/
 /********************          Author:  Moamen Alghareeb       ****************/
 /********************          Layer:   HAL                   ****************/
-/********************          SWC:     MOTOR                    ****************/
+/********************          SWC:     MOTOR                   ****************/
 /********************          Version: 1.0                    ****************/
 /******************************************************************************/
 /******************************************************************************/
 
+#include "STD_TYPES.h"
+#include "BIT_MATH.h"
 
-#ifndef MOTOR_INETERFACE_H_
-#define MOTOR_INETERFACE_H_
-
-
-typedef struct MOTOR
-{
-	u8 PORT_ID;
-	u8 PIN1_ID;
-	u8 PIN2_ID;
-	u8 Speed;
-}MOTOR_t
-
-
-u8 MOTOR_u8Forward();
-u8 MOTOR_u8Backward();
-u8 MOTOR_u8Speed();
-u8 MOTOR_
-u8 MOTOR_
+#include "DIO_interface.h"
+#include "TIMER_interface.h"
 
 
 
-#endif

@@ -8,25 +8,11 @@
 /******************************************************************************/
 
 
-#ifndef MOTOR_INETERFACE_H_
-#define MOTOR_INETERFACE_H_
 
+#ifndef MOTOR_PRIVATE_H_
+#define MOTOR_PRIVATE_H_
 
-typedef struct MOTOR
-{
-	u8 PORT_ID;
-	u8 PIN1_ID;
-	u8 PIN2_ID;
-	u8 Speed;
-}MOTOR_t
-
-
-u8 MOTOR_u8Forward();
-u8 MOTOR_u8Backward();
-u8 MOTOR_u8Speed();
-u8 MOTOR_
-u8 MOTOR_
-
-
+#define COLUMN_NUM			4
+#define ROW_NUM				4
 
 #endif
