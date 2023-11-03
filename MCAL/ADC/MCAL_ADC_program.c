@@ -1,6 +1,6 @@
 /**********************************************************************/
 /**********************************************************************/
-/***********************   OMAR & Ahmed Maher   ***********************/
+/***********************    Ahmed Maher   ***********************/
 /***********************   Layer :MCAL    		***********************/
 /***********************   SWC (DRIVER):ADC 	**********************/
 /***********************   DATA : 26-10-2023	 *********************/
@@ -98,7 +98,7 @@ void ADC_void_Init (void)
 /*Sych Start Conversion is used in the critical instructions*/
 
 
-u8 ADC_u8_StartSingleConversionSyn (u8 Copy_u8Channnel , u16 * Copy_u16Result)
+u8 ADC_u8_StartSingleConversionSyn (ADC_t *singleSync )
 {
 	/*the indication the operation is execute or not
 	 * Options :1 - OK  : the Function is successed
@@ -109,7 +109,7 @@ u8 ADC_u8_StartSingleConversionSyn (u8 Copy_u8Channnel , u16 * Copy_u16Result)
 
 	u32 Local_u32CounterLimit =0 ;
 
-	if (Copy_u16Result !=NULL)
+	if (singleSync->Result !=NULL)
 	{
 		if (ADC_u8State ==IDLE)
 		{
@@ -117,7 +117,7 @@ u8 ADC_u8_StartSingleConversionSyn (u8 Copy_u8Channnel , u16 * Copy_u16Result)
 			/*Clear the channel Code*/
 			ADMUX &= MUX_CLEAR ;
 			/*Set the Channel Code */
-			ADMUX |= Copy_u8Channnel ;
+			ADMUX |= singleSync->Channel_ID ;
 			/*Start Conversion*/
 			SET_BIT(ADCSRA,ADCSRA_ADSC);
 			/* Busy waiting (polling) until the conversion is complete */
@@ -135,9 +135,9 @@ u8 ADC_u8_StartSingleConversionSyn (u8 Copy_u8Channnel , u16 * Copy_u16Result)
 				SET_BIT(ADCSRA,ADCSRA_ADIF);
 
 #if VALUE_REG_CONFIG == STORE_8BIT
-				*Copy_u16Result =ADCH ;
+				*(singleSync->Result) =ADCH ;
 #elif VALUE_REG_CONFIG == STORE_10BIT
-				*Copy_u16Result =ADC ;
+				*singleSync->Result =ADC ;
 #else
 #error "WRONG IN VALUE_REG_CONFIG"
 #endif
@@ -162,23 +162,23 @@ u8 ADC_u8_StartSingleConversionSyn (u8 Copy_u8Channnel , u16 * Copy_u16Result)
 
 }
 
-u8 ADC_u8_StartSingleConversionAsyn (u8 Copy_u8Channel ,u16 *Copy_u16Result , void (*Copy_PvNotification)(void))
+u8 ADC_u8_StartSingleConversionAsyn (ADC_t *singleAsync)
 {
 	u8 Local_u8ErrorState =OK;
-	if ((Copy_u16Result !=NULL)&&(Copy_PvNotification!=NULL))
+	if ((singleAsync->Result !=NULL)&&(singleAsync->Copy_PvNotification!=NULL))
 	{
 		if (ADC_u8State ==IDLE)
 		{
 			ADC_u8State =BUSY ;
 			/*convert the result to the global variable*/
-			ADC_Result=Copy_u16Result  ;
+			ADC_Result=singleAsync->Result  ;
 			/*convert the pointer of the function to global */
-			ADC_PvNotification =Copy_PvNotification;
+			ADC_PvNotification =singleAsync->Copy_PvNotification;
 
 			/*Clear the Channel Code */
 			ADMUX &= MUX_CLEAR;
 			/*Set the channel Code*/
-			ADMUX |= Copy_u8Channel ;
+			ADMUX |= singleAsync->Channel_ID;
 			/*Star tConversion */
 			SET_BIT(ADCSRA,ADCSRA_ADSC);
 			/*enable the adc interrupt*/
@@ -203,9 +203,9 @@ void __vector_16 (void)
 {
 
 #if VALUE_REG_CONFIG == STORE_8BIT
-		*ADC_Result =ADCH ;
+	 *(singleAsync->Result) =ADCH ;
 #elif VALUE_REG_CONFIG == STORE_10BIT
-		*ADC_Result =ADC ;
+	 *singleAsync->Result =ADC ;
 #else
 #error "WRONG IN VALUE_REG_CONFIG"
 #endif

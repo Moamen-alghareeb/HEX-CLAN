@@ -1,6 +1,6 @@
 /**********************************************************************/
 /**********************************************************************/
-/***********************   OMAR & Ahmed Maher   ***********************/
+/***********************    Ahmed Maher   ***********************/
 /***********************   Layer :MCAL    		***********************/
 /***********************   SWC (DRIVER):ADC 	**********************/
 /***********************   DATA : 26-10-2023	 *********************/
@@ -14,14 +14,21 @@
 
 #define ADC_STATE		ENABLE
 
+typedef struct
+		{
+	u8 Channel_ID ;
+	u16 * Result;
+	void (*Copy_PvNotification)(void);
+} ADC_t;
+
 
 
 
 void ADC_void_Init (void);
 
-u8 ADC_u8_StartSingleConversionSyn (u8 Copy_u8Channnel , u16 * Copy_u16Result);
+u8 ADC_u8_StartSingleConversionSyn (ADC_t *singleSync );
 
-u8 ADC_u8_StartSingleConversionAsyn (u8 Copy_u8Channel ,u16 *Copy_u16Result , void (*Copy_PvNotification)(void));
+u8 ADC_u8_StartSingleConversionAsyn (ADC_t *singleAsync);
 
 
 

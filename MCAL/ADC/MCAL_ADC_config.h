@@ -1,6 +1,6 @@
 /**********************************************************************/
 /**********************************************************************/
-/***********************   OMAR & Ahmed Maher   ***********************/
+/***********************    Ahmed Maher   ***********************/
 /***********************   Layer :MCAL    		***********************/
 /***********************   SWC (DRIVER):ADC 	**********************/
 /***********************   DATA : 26-10-2023	 *********************/
@@ -16,7 +16,7 @@
 #define REF_SELECT 		AREF_AVCC
 
 /*Configuration of the value register*/
-#define VALUE_REG_CONFIG	STORE_8BIT
+#define VALUE_REG_CONFIG	STORE_10BIT
 
 /*Configuration of the Prescaler */
 #define ADC_PRESCALER	 	DIVISON_BY_128
