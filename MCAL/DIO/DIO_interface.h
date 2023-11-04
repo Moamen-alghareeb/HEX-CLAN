@@ -75,28 +75,28 @@ typedef struct Dio_ConfigPin {
 	u8 Pin_Id;
 	u8 dir;
 	u8 level;
+	u8*Pret_value;
 } Dio_ConfigPin;
 
 
-typedef struct Dio_ConfigType {
-	const Dio_ConfigPin *pins[32];
-} Dio_ConfigType;
 
 
-void MCAL_DIO_void_Init(const Dio_ConfigType *ConfigPtr);
 
 
-u8 MCAL_DIO_u8_SetPinDirection(u8 Copy_u8Port, u8 Copy_u8Pin, u8 Copy_u8Direction);
 
-u8 MCAL_DIO_u8_SetPortDirection(u8 Copy_u8Port, u8 Copy_u8Direction);
 
-u8 MCAL_DIO_u8_SetPinValue(u8 Copy_u8Port, u8 Copy_u8Pin, u8 Copy_u8Value);
 
-u8 MCAL_DIO_u8_SetPortValue(u8 Copy_u8Port, u8 Copy_u8Value);
+ErrorState_t  MCAL_DIO_u8_SetPinDirection(Dio_ConfigPin *Pset);
 
-u8 MCAL_DIO_u8_GetPinValue(u8 Copy_u8Port, u8 Copy_u8Pin, u8 *Copy_pu8Value);
+ErrorState_t MCAL_DIO_u8_SetPortDirection(Dio_ConfigPin *Pset);
 
-u8 MCAL_DIO_u8_TogglePinValue(u8 copy_u8Port, u8 copy_u8Pin);
+ErrorState_t MCAL_DIO_u8_SetPinValue(Dio_ConfigPin *Pset);
+
+ErrorState_t MCAL_DIO_u8_SetPortValue(Dio_ConfigPin *Pset);
+
+ErrorState_t MCAL_DIO_u8_GetPinValue(Dio_ConfigPin *Pset);
+
+ErrorState_t MCAL_DIO_u8_TogglePinValue(Dio_ConfigPin *Pset);
 
 
 #endif
