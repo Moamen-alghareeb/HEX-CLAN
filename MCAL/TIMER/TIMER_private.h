@@ -58,5 +58,8 @@
 #define COUNTER_FALLING				6
 #define COUNTER_RISING 				7
 
+/*******************************WatchDog MASK****************************/
+#define WDTCR_MASK					WDTCR & 0b1111000
+
 
 #endif
