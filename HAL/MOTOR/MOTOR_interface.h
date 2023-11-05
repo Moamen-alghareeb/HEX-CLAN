@@ -1,32 +1,64 @@
+/*
+ * MOTOR__Interface.h
+ *
+ *  Created on: Nov 4, 2023
+ *      Author: Mega Store
+ */
+
+
+
 /******************************************************************************/
 /******************************************************************************/
-/********************          Author:  Moamen Alghareeb       ****************/
+/********************          Author:  HEX CLAN               ****************/
 /********************          Layer:   HAL                   ****************/
-/********************          SWC:     MOTOR                    ****************/
+/********************          SWC:     MOTOR                  ****************/
 /********************          Version: 1.0                    ****************/
 /******************************************************************************/
 /******************************************************************************/
 
+#ifndef MOTOR__INTERFACE_H
+#define MOTOR__INTERFACE_H
 
-#ifndef MOTOR_INETERFACE_H_
-#define MOTOR_INETERFACE_H_
+
+/*options for PIN1_ID and PIN2_ID
+ * 1-PIN0
+ * 2-PIN1
+ * 3-PIN2
+ * 4-PIN3
+ * 5-PIN4
+ * 6-PIN5
+ * 7-PIN6
+ * 8-PIN7
+ * **/
+/*options for TimerName
+ * 1-TIMER0
+ * 2-TIMER2
+ * **/
+#define	TIMER0		1
+#define	TIMER2		2
+/*options for Speed:
+The value for OCR0/OCR2
+ * **/
 
 
-typedef struct MOTOR
+
+typedef struct
 {
-	u8 PORT_ID;
-	u8 PIN1_ID;
-	u8 PIN2_ID;
+	u8 Pin1_ID;				
+	u8 Pin2_ID;
+	u8 TimerName;
 	u8 Speed;
-}MOTOR_t
+}MOTOR_t;
 
 
-u8 MOTOR_u8Forward();
-u8 MOTOR_u8Backward();
-u8 MOTOR_u8Speed();
-u8 MOTOR_
-u8 MOTOR_
+void MOTOR_vd_CCW(MOTOR_t *motor);
+
+void MOTOR_vd_CW(MOTOR_t *motor);
+
+void MOTOR_vd_stop(MOTOR_t *motor);
 
 
 
-#endif
+
+
+#endif /* MOTOR__INTERFACE_H_ */
