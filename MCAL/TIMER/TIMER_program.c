@@ -639,12 +639,12 @@ void TIMER2_init(void)
 /**********************************************************************/
 /***********************POST BUILD CONFIGURATION***********************/
 /**********************************************************************/
-void TIMER0_voidSetCompMatchValue(u8 Copy_u8Value)
+void TIMER2_voidSetCompMatchValue(u8 Copy_u8Value)
 {
 	OCR2 = Copy_u8Value;
 }
 
-void TIMER0_voidSetTimerValue(u8 Copy_u8Value)
+void TIMER2_voidSetTimerValue(u8 Copy_u8Value)
 {
 	TCNT2 = Copy_u8Value;
 }
